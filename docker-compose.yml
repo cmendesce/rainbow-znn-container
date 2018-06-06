@@ -1,0 +1,63 @@
+version: "3.6"
+
+services:
+  delegate:
+    image: cmendes/rainbow-znn:latest
+    hostname: delegate1
+    networks:
+      - rainbow
+    environment:
+      - rainbow.target=znn
+      - rainbow.config=targets
+      - MODE=delegate
+    volumes:
+      - ./targets:/targets
+
+  master:
+      image: cmendes/rainbow-znn:latest
+      hostname: master
+      networks:
+        - rainbow
+      ports:
+        - 1101:1101
+      environment:
+        - rainbow.target=znn
+        - rainbow.config=targets
+        - MODE=master
+      volumes:
+        - ./targets:/targets
+
+  znn-db:
+    image: mysql:5.5
+    restart: always
+    hostname: znn-db
+    networks:
+      - rainbow
+    volumes:
+      - ./znn-data:/docker-entrypoint-initdb.d
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: znn_data 
+      MYSQL_USER: znn
+      MYSQL_PASSWORD: znn_pass
+
+  znn1:
+    image: cmendes/znn
+    restart: always
+    hostname: znn1
+    networks:
+      - rainbow
+    ports: 
+      - "1080:80"
+    volumes:
+      - ./effectors/tmp/:/tmp/
+    environment:
+        DB_USER: znn
+        DB_PASS: znn_pass
+        DB_NAME: znn_data
+        DB_HOST: db
+        DB_PORT: 3306      
+
+
+networks:
+  rainbow:
